@@ -1,0 +1,43 @@
+name: Update
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  push:
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      DETA_ACCESS_TOKEN: ${{ secrets.DETA_TOKEN }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: fregante/setup-git-user@v1
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Update Requirements.txt
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r rsserpent.txt
+        pip freeze > requirements.txt
+    - name: Push Updates
+      run: |
+        git add .
+        git diff-index --quiet HEAD || git commit -m "update requirements.txt (${{ github.sha }})"
+        git push
+    - name: Deploy to Deta.sh
+      env:
+        DETA_ACCESS_TOKEN: ${{ secrets.DETA_TOKEN }}
+        MICRO_NAME: rsserpent
+      run: |
+        curl -fsSL https://get.deta.dev/cli.sh | sh
+        export PATH="$HOME/.deta/bin:$PATH"
+        deta new --python ${{ env.MICRO_NAME }} || rm -rf ${{ env.MICRO_NAME }} && deta clone --name ${{ env.MICRO_NAME }}
+        cp main.py requirements.txt ${{ env.MICRO_NAME }}/
+        cd ${{ env.MICRO_NAME }}
+        deta deploy
