@@ -2,7 +2,7 @@ anyio==3.5.0
 appdirs==1.4.4
 arrow==1.2.2
 certifi==2021.10.8
-charset-normalizer==2.0.10
+charset-normalizer==2.0.11
 cssselect==1.1.0
 dnspython==2.2.0
 email-validator==1.1.3
